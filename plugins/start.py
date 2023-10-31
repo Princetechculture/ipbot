@@ -153,37 +153,69 @@ REPLY_ERROR = """<code>Use this command as a replay to any telegram message with
     
 @Bot.on_message(filters.command('start') & filters.private)
 async def not_joined(client: Client, message: Message):
-    buttons = [
-        [
-            InlineKeyboardButton(
-                "Join Channel",
-                url = client.invitelink)
-        ]
-    ]
-    try:
+    buttons = []
+
+    if FORCE_SUB_CHANNEL_1:
+        try:
+            member_1 = await client.get_chat_member(chat_id=FORCE_SUB_CHANNEL_1, user_id=message.from_user.id)
+            if member_1.status not in [ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.MEMBER]:
+                buttons.append(
+                    InlineKeyboardButton(
+                        "Join Channel 1",
+                        url=f"https://t.me/{client.username}?start={message.command[1]}_1"
+                    )
+                )
+        except UserNotParticipant:
+            buttons.append(
+                InlineKeyboardButton(
+                    "Join Channel 1",
+                    url=f"https://t.me/{client.username}?start={message.command[1]}_1"
+                )
+            )
+
+    if FORCE_SUB_CHANNEL_2:
+        try:
+            member_2 = await client.get_chat_member(chat_id=FORCE_SUB_CHANNEL_2, user_id=message.from_user.id)
+            if member_2.status not in [ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.MEMBER]:
+                buttons.append(
+                    InlineKeyboardButton(
+                        "Join Channel 2",
+                        url=f"https://t.me/{client.username}?start={message.command[1]}_2"
+                    )
+                )
+        except UserNotParticipant:
+            buttons.append(
+                InlineKeyboardButton(
+                    "Join Channel 2",
+                    url=f"https://t.me/{client.username}?start={message.command[1]}_2"
+                )
+            )
+
+    if buttons:
         buttons.append(
             [
                 InlineKeyboardButton(
-                    text = 'Try Again',
-                    url = f"https://t.me/{client.username}?start={message.command[1]}"
+                    "Try Again",
+                    url=f"https://t.me/{client.username}?start={message.command[1]}"
                 )
             ]
         )
-    except IndexError:
-        pass
 
-    await message.reply(
-        text = FORCE_MSG.format(
-                first = message.from_user.first_name,
-                last = message.from_user.last_name,
-                username = None if not message.from_user.username else '@' + message.from_user.username,
-                mention = message.from_user.mention,
-                id = message.from_user.id
+        await message.reply(
+            text=FORCE_MSG.format(
+                first=message.from_user.first_name,
+                last=message.from_user.last_name,
+                username=None if not message.from_user.username else '@' + message.from_user.username,
+                mention=message.from_user.mention,
+                id=message.from_user.id
             ),
-        reply_markup = InlineKeyboardMarkup(buttons),
-        quote = True,
-        disable_web_page_preview = True
-    )
+            reply_markup=InlineKeyboardMarkup(buttons),
+            quote=True,
+            disable_web_page_preview=True
+        )
+    else:
+        await message.reply_text("You are already a member of both channels. Use the /start command to access the bot's features.")
+
 
 @Bot.on_message(filters.command('users') & filters.private & filters.user(ADMINS))
 async def get_users(client: Bot, message: Message):
