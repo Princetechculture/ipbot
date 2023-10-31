@@ -10,20 +10,36 @@ from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant
 from pyrogram.errors import FloodWait
 
 async def is_subscribed(filter, client, update):
-    if not FORCE_SUB_CHANNEL:
+    if not FORCE_SUB_CHANNEL_1 and not FORCE_SUB_CHANNEL_2:
         return True
+
     user_id = update.from_user.id
     if user_id in ADMINS:
         return True
-    try:
-        member = await client.get_chat_member(chat_id = FORCE_SUB_CHANNEL, user_id = user_id)
-    except UserNotParticipant:
-        return False
 
-    if not member.status in [ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.MEMBER]:
-        return False
-    else:
+    subscribed_to_channel_1 = False
+    subscribed_to_channel_2 = False
+
+    if FORCE_SUB_CHANNEL_1:
+        try:
+            member_1 = await client.get_chat_member(chat_id=FORCE_SUB_CHANNEL_1, user_id=user_id)
+            if member_1.status in [ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.MEMBER]:
+                subscribed_to_channel_1 = True
+        except UserNotParticipant:
+            pass
+
+    if FORCE_SUB_CHANNEL_2:
+        try:
+            member_2 = await client.get_chat_member(chat_id=FORCE_SUB_CHANNEL_2, user_id=user_id)
+            if member_2.status in [ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.MEMBER]:
+                subscribed_to_channel_2 = True
+        except UserNotParticipant:
+            pass
+
+    if subscribed_to_channel_1 or subscribed_to_channel_2:
         return True
+    else:
+        return False
 
 async def encode(string):
     string_bytes = string.encode("ascii")
